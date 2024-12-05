@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<TargetFramework>netstandard2.0</TargetFramework>
+	<AssemblyName>ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistence</AssemblyName>
+	<RootNamespace>ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistence</RootNamespace>
+	<PackageId>ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistence</PackageId>
+	<PackageVersion>0.0.2</PackageVersion>
+	<Authors>Elmer Roderick Niem Bool</Authors>
+	<Description>Extensions Dependency Injection Coding d# neurULization Persistence</Description>
+	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+	<PackageReleaseNotes>Initial commit.</PackageReleaseNotes>
+	<PackageTags>extensions dependency injection coding d# neurulization persistence</PackageTags>
+	<Version>0.0.2</Version>
+	<PackageLicenseUrl>https://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="ei8.Cortex.Coding" Version="0.0.6" />
+	<PackageReference Include="ei8.Cortex.Coding.d23" Version="0.0.5" />
+	<PackageReference Include="ei8.Cortex.Coding.d23.neurULization.Persistence" Version="0.0.9" />
+	<PackageReference Include="ei8.EventSourcing.Client" Version="0.2.12" />
+	<PackageReference Include="Nancy" Version="2.0.0-clinteastwood" />
+  </ItemGroup>
+
+</Project>
