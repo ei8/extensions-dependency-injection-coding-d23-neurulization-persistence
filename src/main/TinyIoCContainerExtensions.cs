@@ -48,10 +48,10 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
             container.Register<IGrannyService>(
                 (tic, npo) => new GrannyService(
                     container.Resolve<IServiceProvider>(),
-                    container.Resolve<IEnsembleRepository>(),
-                    container.Resolve<IDictionary<string, Ensemble>>(),
+                    container.Resolve<INetworkRepository>(),
+                    container.Resolve<IDictionary<string, Network>>(),
                     container.Resolve<ITransaction>(),
-                    container.Resolve<IEnsembleTransactionService>(),
+                    container.Resolve<INetworkTransactionService>(),
                     container.Resolve<IValidationClient>(),
                     identityAccessOutBaseUrl,
                     appUserId
