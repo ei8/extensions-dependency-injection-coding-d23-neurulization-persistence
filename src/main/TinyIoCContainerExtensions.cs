@@ -1,7 +1,7 @@
 ﻿using ei8.Cortex.Coding;
+using ei8.Cortex.Coding.Persistence;
 using ei8.Cortex.Coding.d23.neurULization;
 using ei8.Cortex.Coding.d23.neurULization.Persistence;
-using ei8.Cortex.Coding.Persistence;
 using ei8.Cortex.IdentityAccess.Client.Out;
 using ei8.EventSourcing.Client;
 using Nancy.TinyIoc;
@@ -15,32 +15,69 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
 {
     public static class TinyIoCContainerExtensions
     {
-        public static async Task AddExternalReferences(
+        public static async Task<bool> AddMirrors(
             this TinyIoCContainer container,
-            IExternalReferenceRepository externalReferenceRepository,
-            IEnumerable<object> externalReferenceKeys,
-            bool createExternalReferencesIfNotFound
+            IEnumerable<object> initMirrorKeys,
+            bool shouldInitializeMirrors,
+            Guid userNeuronId
         )
         {
-            if (!await TinyIoCContainerExtensions.InitializeExternalReferencesAsync(
-                externalReferenceRepository,
-                externalReferenceKeys,
-                createExternalReferencesIfNotFound
-                ))
+            bool result = false;
+
+            var mirrorRepository = container.Resolve<IMirrorRepository>();
+            var missingInitMirrorConfigs = await mirrorRepository.GetAllMissingAsync(initMirrorKeys);
+
+            var initialized = shouldInitializeMirrors &&
+                missingInitMirrorConfigs.Any() &&
+                await TinyIoCContainerExtensions.InitializeMirrors(
+                    container.Resolve<ITransaction>(),
+                    userNeuronId,
+                    mirrorRepository,
+                    missingInitMirrorConfigs.Select(mimc => mimc.Key)
+                );
+
+            if (!shouldInitializeMirrors || !initialized)
             {
-                var refs = await externalReferenceRepository.GetByKeysAsync(externalReferenceKeys);
-                IExternalReferenceSet ps = new ExternalReferenceSet();
+                Trace.WriteLine("Not initializing mirrors or Mirrors exist. Continuing app initialization...");
 
-                foreach (var pk in externalReferenceKeys.OfType<Enum>())
-                    ps.GetType().GetProperty(pk.ToString()).SetValue(ps, refs[pk]);
+                var d23Keys = typeof(MirrorSet).GetProperties().Select(p => p.Name);
+                var refs = await mirrorRepository.GetByKeysAsync(d23Keys, false);
+                if (refs.Any() && d23Keys.Count() == refs.Count())
+                {
+                    IMirrorSet mirrorSet = new MirrorSet();
 
-                container.Register(ps);
+                    foreach (var pk in d23Keys)
+                        mirrorSet.GetType().GetProperty(pk.ToString()).SetValue(
+                            mirrorSet,
+                            refs[pk]
+                        );
+
+                    container.Register(mirrorSet);
+
+                    result = true;
+                }
             }
             else
             {
-                Trace.WriteLine("ExternalReferences initialized successfully. Shutting down application...");
+                Trace.WriteLine("Mirrors initialized successfully. Shutting down application...");
                 Environment.Exit(0);
             }
+
+            return result;
+        }
+
+        private static async Task<bool> InitializeMirrors(
+            ITransaction transaction, 
+            Guid userNeuronId, 
+            IMirrorRepository mirrorRepository,
+            IEnumerable<string> keys = null
+            )
+        {
+            await transaction.BeginAsync(userNeuronId);
+            bool initialized = await mirrorRepository.Initialize(keys);
+            await transaction.CommitAsync();
+
+            return initialized;
         }
 
         public static void AddGrannyService(this TinyIoCContainer container, string identityAccessOutBaseUrl, string appUserId)
@@ -57,28 +94,6 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
                     appUserId
                 )
             );
-        }
-
-        private static async Task<bool> InitializeExternalReferencesAsync(
-            IExternalReferenceRepository externalReferenceRepository,
-            IEnumerable<object> externalReferenceKeys,
-            bool createExternalReferencesIfNotFound
-        )
-        {
-            var result = false;
-
-            if (createExternalReferencesIfNotFound)
-            {
-                var missingExternalReferences = await externalReferenceRepository.GetAllMissingAsync(externalReferenceKeys);
-
-                if (missingExternalReferences.Any())
-                {
-                    await externalReferenceRepository.Save(missingExternalReferences);
-                    result = true;
-                }
-            }
-
-            return result;
         }
     }
 }
