@@ -40,20 +40,10 @@ namespace ei8.Extensions.DependencyInjection.Coding.d23.neurULization.Persistenc
             {
                 Trace.WriteLine("Not initializing mirrors or Mirrors exist. Continuing app initialization...");
 
-                var d23Keys = typeof(MirrorSet).GetProperties().Select(p => p.Name);
-                var refs = await mirrorRepository.GetByKeysAsync(d23Keys, false);
-                if (refs.Any() && d23Keys.Count() == refs.Count())
+                IMirrorSet mirrorSet = null;
+                if ((mirrorSet = await mirrorRepository.CreateMirrorSet()) != null)
                 {
-                    IMirrorSet mirrorSet = new MirrorSet();
-
-                    foreach (var pk in d23Keys)
-                        mirrorSet.GetType().GetProperty(pk.ToString()).SetValue(
-                            mirrorSet,
-                            refs[pk]
-                        );
-
                     container.Register(mirrorSet);
-
                     result = true;
                 }
             }
